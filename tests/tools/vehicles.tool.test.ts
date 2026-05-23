@@ -85,6 +85,8 @@ describe('getVehicles', () => {
     expect(text).toContain('1_100259');
     // position must appear
     expect(text).toContain('47.659');
+    // last update shown with human-readable time AND raw ms for format parity
+    expect(text).toMatch(/last update/i);
     expect(text).toContain(NOW_MS.toString());
   });
 

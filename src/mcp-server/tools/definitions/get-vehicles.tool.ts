@@ -7,6 +7,15 @@ import { tool, z } from '@cyanheads/mcp-ts-core';
 import { JsonRpcErrorCode } from '@cyanheads/mcp-ts-core/errors';
 import { getOneBusAwayService } from '@/services/onebusaway/onebusaway-service.js';
 
+/** Format Unix milliseconds as HH:MM. */
+function fmtTime(ms: number): string {
+  if (!ms) return 'N/A';
+  const d = new Date(ms);
+  const h = d.getHours().toString().padStart(2, '0');
+  const m = d.getMinutes().toString().padStart(2, '0');
+  return `${h}:${m}`;
+}
+
 export const getVehicles = tool('onebusaway_get_vehicles', {
   title: 'Get Real-Time Vehicle Positions',
   description:
@@ -111,7 +120,7 @@ export const getVehicles = tool('onebusaway_get_vehicles', {
       }
       if (v.orientation != null) lines.push(`**Heading:** ${v.orientation}°`);
       if (v.nextStop) lines.push(`**Next stop:** ${v.nextStop}`);
-      lines.push(`**Last update (ms):** ${v.lastUpdateTime}`);
+      lines.push(`**Last update:** ${fmtTime(v.lastUpdateTime)} (${v.lastUpdateTime})`);
     }
     return [{ type: 'text', text: lines.join('\n') }];
   },

@@ -166,6 +166,7 @@ export class OneBusAwayService {
     ctx.log.debug('getStop', { stopId });
     try {
       const resp = await this.client.stop.retrieve(stopId);
+      if (!resp.data) throw notFound(`stop "${stopId}" not found.`, { id: stopId });
       return normalizeStop(resp.data.entry);
     } catch (err) {
       classifyError(err, 'stop', stopId);
@@ -182,6 +183,8 @@ export class OneBusAwayService {
       if (!resp.data) return [];
       return resp.data.list.map(normalizeStop);
     } catch (err) {
+      // OBA returns 404 when no stops match — not a real error, just an empty result.
+      if (err instanceof OnebusawaySDK.NotFoundError) return [];
       classifyError(err, 'search/stop', params.query);
     }
   }
@@ -226,6 +229,7 @@ export class OneBusAwayService {
     ctx.log.debug('listRoutesForAgency', { agencyId });
     try {
       const resp = await this.client.routesForAgency.list(agencyId);
+      if (!resp.data) throw notFound(`agency "${agencyId}" not found.`, { id: agencyId });
       // routes-for-agency references block may not include the agency itself
       const agencyName =
         resp.data.references.agencies.find((a) => a.id === agencyId)?.name ?? agencyId;
@@ -392,28 +396,30 @@ export class OneBusAwayService {
       const tripMap = new Map(refs.trips.map((t) => [t.id, t]));
       const routeMap = new Map(refs.routes.map((r) => [r.id, r]));
 
-      let vehicles = resp.data.list.map((v): VehicleEntry => {
-        const tripRef = tripMap.get(v.tripId);
-        const routeId = v.tripStatus.activeTripId
-          ? (tripMap.get(v.tripStatus.activeTripId)?.routeId ?? tripRef?.routeId ?? null)
-          : (tripRef?.routeId ?? null);
-        const routeRef = routeId ? routeMap.get(routeId) : null;
+      let vehicles = resp.data.list
+        .filter((v) => v.location != null)
+        .map((v): VehicleEntry => {
+          const tripRef = tripMap.get(v.tripId);
+          const routeId = v.tripStatus?.activeTripId
+            ? (tripMap.get(v.tripStatus.activeTripId)?.routeId ?? tripRef?.routeId ?? null)
+            : (tripRef?.routeId ?? null);
+          const routeRef = routeId ? routeMap.get(routeId) : null;
 
-        return {
-          vehicleId: v.vehicleId,
-          tripId: v.tripId || null,
-          routeId,
-          routeShortName: routeRef?.shortName ?? routeRef?.nullSafeShortName ?? null,
-          tripHeadsign: tripRef?.tripHeadsign ?? null,
-          position: { lat: v.location.lat ?? 0, lon: v.location.lon ?? 0 },
-          lastUpdateTime: v.lastUpdateTime,
-          phase: v.tripStatus.phase,
-          scheduleDeviation: v.tripStatus.scheduleDeviation,
-          orientation: v.tripStatus.orientation ?? null,
-          nextStop: v.tripStatus.nextStop ?? null,
-          predicted: v.tripStatus.predicted,
-        };
-      });
+          return {
+            vehicleId: v.vehicleId,
+            tripId: v.tripId || null,
+            routeId,
+            routeShortName: routeRef?.shortName ?? routeRef?.nullSafeShortName ?? null,
+            tripHeadsign: tripRef?.tripHeadsign ?? null,
+            position: { lat: v.location.lat ?? 0, lon: v.location.lon ?? 0 },
+            lastUpdateTime: v.lastUpdateTime,
+            phase: v.tripStatus?.phase ?? 'unknown',
+            scheduleDeviation: v.tripStatus?.scheduleDeviation ?? null,
+            orientation: v.tripStatus?.orientation ?? null,
+            nextStop: v.tripStatus?.nextStop ?? null,
+            predicted: v.tripStatus?.predicted ?? false,
+          };
+        });
 
       // Client-side route filter
       if (params.routeId) {
@@ -478,7 +484,7 @@ export class OneBusAwayService {
         ...(params.date && { date: params.date }),
       });
       const entry = resp.data.entry;
-      const stopMap = new Map(entry.stops.map((s) => [s.id, s]));
+      const stopMap = new Map((entry.stops ?? []).map((s) => [s.id, s]));
 
       // Build a map from tripId → stop times from stopTripGroupings
       const tripStopTimesMap = new Map<

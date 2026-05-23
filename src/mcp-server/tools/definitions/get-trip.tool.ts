@@ -7,11 +7,24 @@ import { tool, z } from '@cyanheads/mcp-ts-core';
 import { JsonRpcErrorCode } from '@cyanheads/mcp-ts-core/errors';
 import { getOneBusAwayService } from '@/services/onebusaway/onebusaway-service.js';
 
-function fmtTime(ms: number): string {
+/** Format Unix milliseconds as HH:MM. */
+function fmtTimeMs(ms: number): string {
   if (!ms) return 'N/A';
   const d = new Date(ms);
   const h = d.getHours().toString().padStart(2, '0');
   const m = d.getMinutes().toString().padStart(2, '0');
+  return `${h}:${m}`;
+}
+
+/** Format seconds-from-midnight (GTFS schedule) as HH:MM. */
+function fmtTimeSec(secs: number): string {
+  if (!secs && secs !== 0) return 'N/A';
+  const h = Math.floor(secs / 3600)
+    .toString()
+    .padStart(2, '0');
+  const m = Math.floor((secs % 3600) / 60)
+    .toString()
+    .padStart(2, '0');
   return `${h}:${m}`;
 }
 
@@ -67,8 +80,12 @@ export const getTrip = tool('onebusaway_get_trip', {
           .object({
             stopId: z.string().describe('Stop ID.'),
             stopName: z.string().describe('Stop name.'),
-            arrivalTime: z.number().describe('Scheduled arrival time as Unix milliseconds.'),
-            departureTime: z.number().describe('Scheduled departure time as Unix milliseconds.'),
+            arrivalTime: z
+              .number()
+              .describe('Scheduled arrival time as seconds from midnight (GTFS format).'),
+            departureTime: z
+              .number()
+              .describe('Scheduled departure time as seconds from midnight (GTFS format).'),
             distanceAlongTripMeters: z
               .number()
               .describe('Distance along the trip to this stop, in meters.'),
@@ -125,7 +142,7 @@ export const getTrip = tool('onebusaway_get_trip', {
     }
     if (s.nextStop) lines.push(`**Next stop:** ${s.nextStop}`);
     if (s.closestStop) lines.push(`**Closest stop:** ${s.closestStop}`);
-    lines.push(`**Last update:** ${fmtTime(s.lastUpdateTime)} (${s.lastUpdateTime} ms)`);
+    lines.push(`**Last update:** ${fmtTimeMs(s.lastUpdateTime)} (${s.lastUpdateTime})`);
 
     if (result.situations.length > 0) {
       lines.push(`**Active alerts:** ${result.situations.join(', ')}`);
@@ -135,7 +152,7 @@ export const getTrip = tool('onebusaway_get_trip', {
       lines.push('\n## Stop Sequence');
       for (const st of result.schedule) {
         lines.push(
-          `- **${st.stopName}** (${st.stopId}) — arr ${fmtTime(st.arrivalTime)} [${st.arrivalTime}], dep ${fmtTime(st.departureTime)} [${st.departureTime}] | dist ${Math.round(st.distanceAlongTripMeters)}m`,
+          `- **${st.stopName}** (${st.stopId}) — arr ${fmtTimeSec(st.arrivalTime)} [${st.arrivalTime}s], dep ${fmtTimeSec(st.departureTime)} [${st.departureTime}s] | dist ${Math.round(st.distanceAlongTripMeters)}m`,
         );
       }
     }

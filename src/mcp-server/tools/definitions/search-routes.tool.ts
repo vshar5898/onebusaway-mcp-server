@@ -4,6 +4,7 @@
  */
 
 import { tool, z } from '@cyanheads/mcp-ts-core';
+import { JsonRpcErrorCode } from '@cyanheads/mcp-ts-core/errors';
 import { getOneBusAwayService } from '@/services/onebusaway/onebusaway-service.js';
 
 export const searchRoutes = tool('onebusaway_search_routes', {
@@ -43,6 +44,16 @@ export const searchRoutes = tool('onebusaway_search_routes', {
       )
       .describe('Routes matching the search query.'),
   }),
+
+  errors: [
+    {
+      reason: 'endpoint_unavailable',
+      code: JsonRpcErrorCode.NotFound,
+      when: 'The search/route endpoint returns 404 on this OBA instance (e.g. Puget Sound).',
+      recovery:
+        'Use onebusaway_find_routes with a lat/lon near the service area, or onebusaway_list_routes_for_agency with a known agency ID to browse all routes.',
+    },
+  ],
 
   async handler(input, ctx) {
     const routes = await getOneBusAwayService().searchRoutes(

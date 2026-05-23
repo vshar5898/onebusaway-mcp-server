@@ -7,11 +7,15 @@ import { tool, z } from '@cyanheads/mcp-ts-core';
 import { JsonRpcErrorCode } from '@cyanheads/mcp-ts-core/errors';
 import { getOneBusAwayService } from '@/services/onebusaway/onebusaway-service.js';
 
-function fmtTime(ms: number): string {
-  if (!ms) return 'N/A';
-  const d = new Date(ms);
-  const h = d.getHours().toString().padStart(2, '0');
-  const m = d.getMinutes().toString().padStart(2, '0');
+/** Format seconds-from-midnight (GTFS schedule) as HH:MM. */
+function fmtTimeSec(secs: number): string {
+  if (!secs && secs !== 0) return 'N/A';
+  const h = Math.floor(secs / 3600)
+    .toString()
+    .padStart(2, '0');
+  const m = Math.floor((secs % 3600) / 60)
+    .toString()
+    .padStart(2, '0');
   return `${h}:${m}`;
 }
 
@@ -48,10 +52,10 @@ export const getScheduleForRoute = tool('onebusaway_get_schedule_for_route', {
                     stopName: z.string().describe('Stop name.'),
                     arrivalTime: z
                       .number()
-                      .describe('Scheduled arrival time as Unix milliseconds.'),
+                      .describe('Scheduled arrival time as seconds from midnight (GTFS format).'),
                     departureTime: z
                       .number()
-                      .describe('Scheduled departure time as Unix milliseconds.'),
+                      .describe('Scheduled departure time as seconds from midnight (GTFS format).'),
                   })
                   .describe('A stop time along this trip.'),
               )
@@ -87,9 +91,16 @@ export const getScheduleForRoute = tool('onebusaway_get_schedule_for_route', {
   },
 
   format: (result) => {
+    const serviceDate = new Date(result.serviceDateMs);
+    const serviceDateStr = serviceDate.toLocaleDateString('en-US', {
+      weekday: 'short',
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+    });
     const lines: string[] = [
       `## Schedule for Route ${result.routeShortName} (${result.routeId})`,
-      `**Service date (ms):** ${result.serviceDateMs}`,
+      `**Service date:** ${serviceDateStr} (${result.serviceDateMs})`,
       `**Trips:** ${result.trips.length}`,
     ];
     for (const t of result.trips) {
@@ -99,12 +110,12 @@ export const getScheduleForRoute = tool('onebusaway_get_schedule_for_route', {
         const last = t.stops.at(-1);
         if (first && last) {
           lines.push(
-            `Departs ${first.stopName} at ${fmtTime(first.departureTime)}, arrives ${last.stopName} at ${fmtTime(last.arrivalTime)} — ${t.stops.length} stops`,
+            `Departs ${first.stopName} at ${fmtTimeSec(first.departureTime)}, arrives ${last.stopName} at ${fmtTimeSec(last.arrivalTime)} — ${t.stops.length} stops`,
           );
         }
         for (const s of t.stops) {
           lines.push(
-            `- ${fmtTime(s.arrivalTime)} [${s.arrivalTime}] ${s.stopName} (${s.stopId}) dep ${fmtTime(s.departureTime)} [${s.departureTime}]`,
+            `- ${fmtTimeSec(s.arrivalTime)} [${s.arrivalTime}s] ${s.stopName} (${s.stopId}) dep ${fmtTimeSec(s.departureTime)} [${s.departureTime}s]`,
           );
         }
       }

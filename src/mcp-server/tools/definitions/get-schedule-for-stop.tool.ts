@@ -99,9 +99,16 @@ export const getScheduleForStop = tool('onebusaway_get_schedule_for_stop', {
   },
 
   format: (result) => {
+    const serviceDate = new Date(result.serviceDateMs);
+    const serviceDateStr = serviceDate.toLocaleDateString('en-US', {
+      weekday: 'short',
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+    });
     const lines: string[] = [
       `## Schedule for ${result.stopName} (${result.stopId})`,
-      `**Service date (ms):** ${result.serviceDateMs}`,
+      `**Service date:** ${serviceDateStr} (${result.serviceDateMs})`,
       `**Routes:** ${result.routes.length}`,
     ];
     for (const r of result.routes) {
@@ -109,8 +116,7 @@ export const getScheduleForStop = tool('onebusaway_get_schedule_for_stop', {
       for (const dir of r.directions) {
         lines.push(`**→ ${dir.tripHeadsign}** (${dir.departures.length} departures)`);
         const times = dir.departures.map(
-          (d) =>
-            `${fmtTime(d.scheduledDepartureTime)} (${d.scheduledDepartureTime} ms) [${d.tripId}]`,
+          (d) => `${fmtTime(d.scheduledDepartureTime)} (${d.scheduledDepartureTime}) [${d.tripId}]`,
         );
         lines.push(times.join(', '));
       }

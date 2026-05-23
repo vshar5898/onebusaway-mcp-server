@@ -22,6 +22,12 @@ beforeEach(() => {
 
 const NOW_MS = 1748000000000;
 
+/** Seconds from midnight for stop times — GTFS schedule format. */
+const SCHED_ARR_1 = 8 * 3600; // 08:00
+const SCHED_DEP_1 = 8 * 3600 + 60; // 08:01
+const SCHED_ARR_2 = 8 * 3600 + 2 * 60; // 08:02
+const SCHED_DEP_2 = 8 * 3600 + 3 * 60; // 08:03
+
 const TRIP_RESULT = {
   tripId: 'trip_abc',
   routeShortName: '44',
@@ -40,15 +46,15 @@ const TRIP_RESULT = {
     {
       stopId: '1_75400',
       stopName: 'U-District',
-      arrivalTime: NOW_MS,
-      departureTime: NOW_MS + 60_000,
+      arrivalTime: SCHED_ARR_1,
+      departureTime: SCHED_DEP_1,
       distanceAlongTripMeters: 500,
     },
     {
       stopId: '1_75403',
       stopName: 'University Way',
-      arrivalTime: NOW_MS + 120_000,
-      departureTime: NOW_MS + 180_000,
+      arrivalTime: SCHED_ARR_2,
+      departureTime: SCHED_DEP_2,
       distanceAlongTripMeters: 1200,
     },
   ],

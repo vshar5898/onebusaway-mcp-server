@@ -144,7 +144,7 @@ export const getArrivals = tool('onebusaway_get_arrivals', {
   format: (result) => {
     const lines: string[] = [
       `## Arrivals at ${result.stopName} (${result.stopId})`,
-      `**Current time:** ${fmtTime(result.currentTime)} (${result.currentTime} ms)`,
+      `**Current time:** ${fmtTime(result.currentTime)} (${result.currentTime})`,
       `**Arrivals:** ${result.arrivals.length}`,
     ];
 
@@ -157,8 +157,18 @@ export const getArrivals = tool('onebusaway_get_arrivals', {
         const devStr = a.predicted ? ` (${fmtDeviation(a.scheduleDeviation)})` : ' (scheduled)';
         lines.push(`\n### Route ${a.routeShortName} → ${a.tripHeadsign}`);
         lines.push(`**Arrives:** ${timeStr}${devStr}`);
+        lines.push(`**Scheduled:** ${fmtTime(a.scheduledArrivalTime)} (${a.scheduledArrivalTime})`);
+        if (a.predictedArrivalTime != null) {
+          lines.push(
+            `**Predicted:** ${fmtTime(a.predictedArrivalTime)} (${a.predictedArrivalTime})`,
+          );
+        }
         lines.push(`**Trip ID:** ${a.tripId} | **Route ID:** ${a.routeId}`);
-        if (a.stopsAway != null) lines.push(`**Stops away:** ${a.stopsAway}`);
+        if (a.stopsAway != null && a.stopsAway >= 0) {
+          lines.push(`**Stops away:** ${a.stopsAway === 0 ? 'At stop' : a.stopsAway}`);
+        } else if (a.stopsAway != null && a.stopsAway < 0) {
+          lines.push(`**Stops away:** Arrived`);
+        }
         if (a.vehicleId) lines.push(`**Vehicle:** ${a.vehicleId}`);
         if (a.vehiclePosition) {
           lines.push(
@@ -168,12 +178,10 @@ export const getArrivals = tool('onebusaway_get_arrivals', {
         if (a.situationIds.length > 0) {
           lines.push(`**Alerts:** ${a.situationIds.join(', ')}`);
         }
-        lines.push(`**Predicted:** ${a.predicted}`);
-        lines.push(`**Scheduled arrival (ms):** ${a.scheduledArrivalTime}`);
-        if (a.predictedArrivalTime != null) {
-          lines.push(`**Predicted arrival (ms):** ${a.predictedArrivalTime}`);
-        }
-        lines.push(`**Schedule deviation (s):** ${a.scheduleDeviation}`);
+        lines.push(`**GPS-tracked:** ${a.predicted}`);
+        lines.push(
+          `**Schedule deviation:** ${fmtDeviation(a.scheduleDeviation)} (${a.scheduleDeviation}s)`,
+        );
       }
     }
 

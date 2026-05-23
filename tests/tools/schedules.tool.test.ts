@@ -26,6 +26,16 @@ beforeEach(() => {
 
 const NOW_MS = 1748000000000;
 
+/** Unix ms for stop schedule departure times (OBA schedule-for-stop returns Unix ms). */
+const DEP_TIME_1 = NOW_MS + 2 * 60 * 1000; // 2 min after base time
+const DEP_TIME_2 = NOW_MS + 8 * 60 * 1000; // 8 min after base time
+
+/** Seconds from midnight for route schedule stop times. */
+const ARR_TIME_A = 8 * 3600; // 08:00
+const DEP_TIME_A = 8 * 3600 + 60; // 08:01
+const ARR_TIME_B = 8 * 3600 + 2 * 60; // 08:02
+const DEP_TIME_B = 8 * 3600 + 3 * 60; // 08:03
+
 const STOP_SCHEDULE = {
   stopId: '1_75403',
   stopName: 'University Way NE & NE 42nd St',
@@ -38,8 +48,8 @@ const STOP_SCHEDULE = {
         {
           tripHeadsign: 'Downtown Seattle',
           departures: [
-            { scheduledDepartureTime: NOW_MS + 120_000, tripId: 'trip_abc' },
-            { scheduledDepartureTime: NOW_MS + 480_000, tripId: 'trip_def' },
+            { scheduledDepartureTime: DEP_TIME_1, tripId: 'trip_abc' },
+            { scheduledDepartureTime: DEP_TIME_2, tripId: 'trip_def' },
           ],
         },
       ],
@@ -60,14 +70,14 @@ const ROUTE_SCHEDULE = {
         {
           stopId: '1_75400',
           stopName: 'U-District',
-          arrivalTime: NOW_MS,
-          departureTime: NOW_MS + 60_000,
+          arrivalTime: ARR_TIME_A,
+          departureTime: DEP_TIME_A,
         },
         {
           stopId: '1_75403',
           stopName: 'University Way',
-          arrivalTime: NOW_MS + 120_000,
-          departureTime: NOW_MS + 180_000,
+          arrivalTime: ARR_TIME_B,
+          departureTime: DEP_TIME_B,
         },
       ],
     },
@@ -123,7 +133,12 @@ describe('getScheduleForStop', () => {
     expect(text).toContain('1_100259');
     expect(text).toContain('44');
     expect(text).toContain('trip_abc');
+    // service date shown as human-readable text AND raw ms for format parity
+    expect(text).toMatch(/service date/i);
     expect(text).toContain(NOW_MS.toString());
+    // departure times shown as HH:MM alongside raw ms
+    expect(text).toMatch(/\d{2}:\d{2}/);
+    expect(text).toContain(DEP_TIME_1.toString());
   });
 });
 
@@ -165,7 +180,12 @@ describe('getScheduleForRoute', () => {
     expect(text).toContain('44');
     expect(text).toContain('trip_abc');
     expect(text).toContain('1_75403');
+    // service date shown as human-readable text AND raw ms for format parity
+    expect(text).toMatch(/service date/i);
     expect(text).toContain(NOW_MS.toString());
+    // stop times shown as HH:MM alongside raw seconds-from-midnight for format parity
+    expect(text).toMatch(/\d{2}:\d{2}/);
+    expect(text).toContain(ARR_TIME_A.toString());
   });
 
   it('formats empty trips list', () => {
