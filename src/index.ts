@@ -26,6 +26,8 @@ import { searchStops } from './mcp-server/tools/definitions/search-stops.tool.js
 import { initOneBusAwayService } from './services/onebusaway/onebusaway-service.js';
 
 await createApp({
+  // Public hosted catalog — serve full inventory without auth gate.
+  landing: { requireAuth: false },
   tools: [
     listAgencies,
     findStops,
