@@ -2,6 +2,10 @@
 
 All notable changes to this project. Each entry links to its full per-version file in [changelog/](changelog/).
 
+## [0.1.5](changelog/0.1.x/0.1.5.md) — 2026-05-30
+
+Enrichment adoption — find/search/arrivals/schedule/vehicles tools now surface query echoes, result counts, and empty-result guidance in a typed enrichment block reaching both structuredContent and content[] channels.
+
 ## [0.1.4](changelog/0.1.x/0.1.4.md) — 2026-05-28
 
 @cyanheads/mcp-ts-core ^0.9.7 → ^0.9.13; HTTP 413 body cap, session-init gate, quieter 401/403/400/404 logging, GET /mcp surfaces keywords; dep refresh; landing requireAuth fix
