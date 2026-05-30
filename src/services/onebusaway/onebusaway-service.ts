@@ -5,17 +5,19 @@
  */
 
 import type { Context } from '@cyanheads/mcp-ts-core';
-import { notFound, rateLimited, serviceUnavailable } from '@cyanheads/mcp-ts-core/errors';
+import { McpError, notFound, rateLimited, serviceUnavailable } from '@cyanheads/mcp-ts-core/errors';
 import OnebusawaySDK from 'onebusaway-sdk';
 import type { ServerConfig } from '@/config/server-config.js';
 import type {
   Agency,
   ArrivalEntry,
   ArrivalsResult,
+  BlockResult,
   Route,
   RouteScheduleResult,
   RouteScheduleTrip,
   Situation,
+  SituationDetail,
   Stop,
   StopScheduleResult,
   StopScheduleRoute,
@@ -81,10 +83,19 @@ function normalizeRoute(
   };
 }
 
-/** Classifies SDK errors to McpError subclasses. */
-function classifyError(err: unknown, entityType: string, entityId: string): never {
+/** Classifies SDK errors to McpError subclasses. Re-throws McpErrors as-is. */
+function classifyError(
+  err: unknown,
+  entityType: string,
+  entityId: string,
+  notFoundReason?: string,
+): never {
+  if (err instanceof McpError) throw err;
   if (err instanceof OnebusawaySDK.NotFoundError) {
-    throw notFound(`${entityType} "${entityId}" not found.`, { id: entityId });
+    throw notFound(`${entityType} "${entityId}" not found.`, {
+      id: entityId,
+      ...(notFoundReason && { reason: notFoundReason }),
+    });
   }
   if (err instanceof OnebusawaySDK.RateLimitError) {
     throw rateLimited(
@@ -166,10 +177,11 @@ export class OneBusAwayService {
     ctx.log.debug('getStop', { stopId });
     try {
       const resp = await this.client.stop.retrieve(stopId);
-      if (!resp.data) throw notFound(`stop "${stopId}" not found.`, { id: stopId });
+      if (!resp?.data?.entry)
+        throw notFound(`stop "${stopId}" not found.`, { id: stopId, reason: 'stop_not_found' });
       return normalizeStop(resp.data.entry);
     } catch (err) {
-      classifyError(err, 'stop', stopId);
+      classifyError(err, 'stop', stopId, 'stop_not_found');
     }
   }
 
@@ -180,7 +192,7 @@ export class OneBusAwayService {
         input: params.query,
         ...(params.maxCount != null && { maxCount: params.maxCount }),
       });
-      if (!resp.data) return [];
+      if (!resp?.data) return [];
       return resp.data.list.map(normalizeStop);
     } catch (err) {
       // OBA returns 404 when no stops match — not a real error, just an empty result.
@@ -221,7 +233,7 @@ export class OneBusAwayService {
       const r = resp.data.entry;
       return normalizeRoute(r, agencyMap.get(r.agencyId)?.name ?? r.agencyId);
     } catch (err) {
-      classifyError(err, 'route', routeId);
+      classifyError(err, 'route', routeId, 'route_not_found');
     }
   }
 
@@ -229,13 +241,17 @@ export class OneBusAwayService {
     ctx.log.debug('listRoutesForAgency', { agencyId });
     try {
       const resp = await this.client.routesForAgency.list(agencyId);
-      if (!resp.data) throw notFound(`agency "${agencyId}" not found.`, { id: agencyId });
+      if (!resp?.data)
+        throw notFound(`agency "${agencyId}" not found.`, {
+          id: agencyId,
+          reason: 'agency_not_found',
+        });
       // routes-for-agency references block may not include the agency itself
       const agencyName =
         resp.data.references.agencies.find((a) => a.id === agencyId)?.name ?? agencyId;
       return resp.data.list.map((r) => normalizeRoute(r, agencyName));
     } catch (err) {
-      classifyError(err, 'agency', agencyId);
+      classifyError(err, 'agency', agencyId, 'agency_not_found');
     }
   }
 
@@ -246,7 +262,7 @@ export class OneBusAwayService {
         input: params.query,
         ...(params.maxCount != null && { maxCount: params.maxCount }),
       });
-      if (!resp.data) return [];
+      if (!resp?.data) return [];
       const agencyMap = new Map(resp.data.references.agencies.map((a) => [a.id, a]));
       return resp.data.list.map((r) =>
         normalizeRoute(r, agencyMap.get(r.agencyId)?.name ?? r.agencyId),
@@ -323,7 +339,7 @@ export class OneBusAwayService {
         situations,
       };
     } catch (err) {
-      classifyError(err, 'stop', params.stopId);
+      classifyError(err, 'stop', params.stopId, 'stop_not_found');
     }
   }
 
@@ -381,7 +397,7 @@ export class OneBusAwayService {
         situations: entry.situationIds ?? [],
       };
     } catch (err) {
-      classifyError(err, 'trip', params.tripId);
+      classifyError(err, 'trip', params.tripId, 'trip_not_found');
     }
   }
 
@@ -430,7 +446,7 @@ export class OneBusAwayService {
 
       return vehicles;
     } catch (err) {
-      classifyError(err, 'agency', params.agencyId);
+      classifyError(err, 'agency', params.agencyId, 'agency_not_found');
     }
   }
 
@@ -472,7 +488,7 @@ export class OneBusAwayService {
         routes,
       };
     } catch (err) {
-      classifyError(err, 'stop', params.stopId);
+      classifyError(err, 'stop', params.stopId, 'stop_not_found');
     }
   }
 
@@ -533,7 +549,113 @@ export class OneBusAwayService {
         trips,
       };
     } catch (err) {
-      classifyError(err, 'route', params.routeId);
+      classifyError(err, 'route', params.routeId, 'route_not_found');
+    }
+  }
+
+  // ----- Alerts (situations) -----
+
+  async getAlert(situationId: string, ctx: Context): Promise<SituationDetail> {
+    ctx.log.debug('getAlert', { situationId });
+    try {
+      // The SDK has no dedicated situation endpoint — call the REST API directly.
+      // client.get() is public on the base APIClient class (core.d.ts line 105).
+      const resp = await this.client.get<
+        unknown,
+        {
+          data: {
+            entry: {
+              id: string;
+              creationTime: number;
+              summary?: { value?: string };
+              description?: { value?: string };
+              reason?: string;
+              severity?: string;
+              consequenceMessage?: string;
+              allAffects?: Array<{
+                agencyId?: string;
+                routeId?: string;
+                stopId?: string;
+                tripId?: string;
+              }>;
+              consequences?: Array<{
+                condition?: string;
+                conditionDetails?: { diversionStopIds?: string[] };
+              }>;
+              activeWindows?: Array<{ from?: number; to?: number }>;
+              url?: { value?: string };
+            };
+          };
+        }
+      >(`/api/where/situation/${situationId}.json`);
+
+      const entry = resp.data.entry;
+      if (!entry)
+        throw notFound(`situation "${situationId}" not found.`, {
+          id: situationId,
+          reason: 'situation_not_found',
+        });
+
+      return {
+        id: entry.id,
+        summary: entry.summary?.value ?? '',
+        description: entry.description?.value ?? null,
+        reason: entry.reason ?? null,
+        severity: entry.severity ?? null,
+        consequenceMessage: entry.consequenceMessage ?? null,
+        affects: (entry.allAffects ?? []).map((a) => ({
+          ...(a.agencyId && { agencyId: a.agencyId }),
+          ...(a.routeId && { routeId: a.routeId }),
+          ...(a.stopId && { stopId: a.stopId }),
+          ...(a.tripId && { tripId: a.tripId }),
+        })),
+        consequences: (entry.consequences ?? []).map((c) => ({
+          ...(c.condition && { condition: c.condition }),
+          ...(c.conditionDetails?.diversionStopIds?.length && {
+            diversionStopIds: c.conditionDetails.diversionStopIds,
+          }),
+        })),
+        activeWindows: entry.activeWindows ?? [],
+        url: entry.url?.value ?? null,
+      };
+    } catch (err) {
+      classifyError(err, 'situation', situationId, 'situation_not_found');
+    }
+  }
+
+  // ----- Block -----
+
+  async getBlock(blockId: string, ctx: Context): Promise<BlockResult> {
+    ctx.log.debug('getBlock', { blockId });
+    try {
+      const resp = await this.client.block.retrieve(blockId);
+      const entry = resp.data.entry;
+      const configurations = entry?.configurations ?? [];
+      // block endpoint returns an empty-ish entry (no configurations) when not found
+      const config = configurations[0];
+      if (!config) {
+        throw notFound(`block "${blockId}" not found.`, { id: blockId, reason: 'block_not_found' });
+      }
+
+      return {
+        blockId: entry.id,
+        activeServiceIds: config.activeServiceIds,
+        inactiveServiceIds: config.inactiveServiceIds ?? [],
+        trips: config.trips.map((t) => ({
+          tripId: t.tripId,
+          distanceAlongBlock: t.distanceAlongBlock,
+          accumulatedSlackTime: t.accumulatedSlackTime,
+          blockStopTimes: t.blockStopTimes.map((bst) => ({
+            arrivalTime: bst.stopTime.arrivalTime,
+            departureTime: bst.stopTime.departureTime,
+            stopId: bst.stopTime.stopId,
+            ...(bst.stopTime.pickupType != null && { pickupType: bst.stopTime.pickupType }),
+            ...(bst.stopTime.dropOffType != null && { dropOffType: bst.stopTime.dropOffType }),
+          })),
+        })),
+      };
+    } catch (err) {
+      classifyError(err, 'block', blockId, 'block_not_found');
     }
   }
 }

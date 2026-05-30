@@ -61,6 +61,62 @@ export interface Situation {
   summary: string;
 }
 
+// --- Situation detail (full alert) ---
+
+export interface SituationAffect {
+  agencyId?: string;
+  routeId?: string;
+  stopId?: string;
+  tripId?: string;
+}
+
+export interface SituationActiveWindow {
+  from?: number;
+  to?: number;
+}
+
+export interface SituationConsequence {
+  condition?: string;
+  diversionStopIds?: string[];
+}
+
+export interface SituationDetail {
+  activeWindows: SituationActiveWindow[];
+  affects: SituationAffect[];
+  consequenceMessage: string | null;
+  consequences: SituationConsequence[];
+  description: string | null;
+  id: string;
+  reason: string | null;
+  severity: string | null;
+  summary: string;
+  url: string | null;
+}
+
+// --- Block schedule ---
+
+export interface BlockStopTime {
+  arrivalTime: number;
+  departureTime: number;
+  dropOffType?: number;
+  pickupType?: number;
+  stopId: string;
+}
+
+export interface BlockTrip {
+  accumulatedSlackTime: number;
+  blockStopTimes: BlockStopTime[];
+  distanceAlongBlock: number;
+  tripId: string;
+}
+
+export interface BlockResult {
+  activeServiceIds: string[];
+  blockId: string;
+  inactiveServiceIds: string[];
+  trips: BlockTrip[];
+}
+
 // --- Arrivals ---
 
 export interface ArrivalEntry {

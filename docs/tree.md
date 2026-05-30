@@ -1,6 +1,6 @@
 # onebusaway-mcp-server - Directory Structure
 
-Generated on: 2026-05-29 03:39:42
+Generated on: 2026-05-30 12:59:11
 
 ```text
 onebusaway-mcp-server/
@@ -123,7 +123,9 @@ onebusaway-mcp-server/
 │   │       └── definitions/
 │   │           ├── find-routes.tool.ts
 │   │           ├── find-stops.tool.ts
+│   │           ├── get-alert.tool.ts
 │   │           ├── get-arrivals.tool.ts
+│   │           ├── get-block.tool.ts
 │   │           ├── get-route.tool.ts
 │   │           ├── get-schedule-for-route.tool.ts
 │   │           ├── get-schedule-for-stop.tool.ts
@@ -145,6 +147,7 @@ onebusaway-mcp-server/
 │   │   └── onebusaway.resource.test.ts
 │   └── tools/
 │       ├── agencies.tool.test.ts
+│       ├── alerts-and-blocks.tool.test.ts
 │       ├── arrivals.tool.test.ts
 │       ├── routes.tool.test.ts
 │       ├── schedules.tool.test.ts

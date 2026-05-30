@@ -12,7 +12,9 @@ import { stopResource } from './mcp-server/resources/definitions/stop.resource.j
 // Tools
 import { findRoutes } from './mcp-server/tools/definitions/find-routes.tool.js';
 import { findStops } from './mcp-server/tools/definitions/find-stops.tool.js';
+import { getAlert } from './mcp-server/tools/definitions/get-alert.tool.js';
 import { getArrivals } from './mcp-server/tools/definitions/get-arrivals.tool.js';
+import { getBlock } from './mcp-server/tools/definitions/get-block.tool.js';
 import { getRoute } from './mcp-server/tools/definitions/get-route.tool.js';
 import { getScheduleForRoute } from './mcp-server/tools/definitions/get-schedule-for-route.tool.js';
 import { getScheduleForStop } from './mcp-server/tools/definitions/get-schedule-for-stop.tool.js';
@@ -38,7 +40,9 @@ await createApp({
     getRoute,
     listRoutesForAgency,
     getArrivals,
+    getAlert,
     getTrip,
+    getBlock,
     getVehicles,
     getScheduleForStop,
     getScheduleForRoute,
@@ -50,6 +54,8 @@ await createApp({
     '- Stop IDs use agency-prefixed format: {agencyId}_{localId} (e.g. "1_75403" for Metro Transit stop 75403)\n' +
     '- To get arrivals: use onebusaway_find_stops or onebusaway_search_stops to resolve a location/name to a stopId, then call onebusaway_get_arrivals\n' +
     '- For "where is the 44?": use onebusaway_search_routes to get routeId, then onebusaway_get_vehicles\n' +
+    '- For service alert details: get a situationId from onebusaway_get_arrivals (situations[].id), then call onebusaway_get_alert\n' +
+    "- For a vehicle's full day schedule: get a tripId from onebusaway_get_arrivals, call onebusaway_get_trip to find the blockId, then call onebusaway_get_block\n" +
     '- OneBusAway does not include trip planning — direct users to Google Maps or Transit app for routing',
   setup() {
     initOneBusAwayService(getServerConfig());

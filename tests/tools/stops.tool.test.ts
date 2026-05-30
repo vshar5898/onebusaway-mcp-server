@@ -148,6 +148,20 @@ describe('getStop', () => {
     await expect(getStop.handler(input, ctx)).rejects.toThrow();
   });
 
+  it('throws with data.reason "stop_not_found" from classifyError (#12)', async () => {
+    const ctx = createMockContext({ errors: getStop.errors });
+    mockService.getStop.mockRejectedValue(
+      new McpError(-32001, 'stop "1_INVALID" not found.', {
+        id: '1_INVALID',
+        reason: 'stop_not_found',
+      }),
+    );
+    const input = getStop.input.parse({ stopId: '1_INVALID' });
+    await expect(getStop.handler(input, ctx)).rejects.toMatchObject({
+      data: { reason: 'stop_not_found' },
+    });
+  });
+
   it('formats stop with ID, code, and routes', () => {
     const blocks = getStop.format!(STOP_FIXTURE);
     const text = (blocks[0] as { text: string }).text;
